@@ -46,7 +46,7 @@ class OtpTextField extends StatefulWidget {
   final List<TextInputFormatter>? inputFormatters;
   final EdgeInsetsGeometry? contentPadding;
 
-  OtpTextField({
+  OtpTextField({super.key,
     this.showCursor = true,
     this.numberOfFields = 4,
     this.fieldWidth = 40.0,
@@ -154,7 +154,7 @@ class _OtpTextFieldState extends State<OtpTextField> {
         showCursor: widget.showCursor,
         keyboardType: widget.keyboardType,
         textAlign: TextAlign.center,
-        maxLength: 1,
+        maxLength: widget.numberOfFields,
         readOnly: widget.readOnly,
         style: style ?? widget.textStyle,
         autofocus: widget.autoFocus,
@@ -166,35 +166,46 @@ class _OtpTextFieldState extends State<OtpTextField> {
         decoration: widget.hasCustomInputDecoration
             ? widget.decoration
             : InputDecoration(
-                counterText: "",
-                filled: widget.filled,
-                fillColor: widget.fillColor,
-                focusedBorder: widget.showFieldAsBox
-                    ? outlineBorder(widget.focusedBorderColor)
-                    : underlineInputBorder(widget.focusedBorderColor),
-                enabledBorder: widget.showFieldAsBox
-                    ? outlineBorder(widget.enabledBorderColor)
-                    : underlineInputBorder(widget.enabledBorderColor),
-                disabledBorder: widget.showFieldAsBox
-                    ? outlineBorder(widget.disabledBorderColor)
-                    : underlineInputBorder(widget.disabledBorderColor),
-                border: widget.showFieldAsBox
-                    ? outlineBorder(widget.borderColor)
-                    : underlineInputBorder(widget.borderColor),
-                contentPadding: widget.contentPadding,
-              ),
+          counterText: "",
+          filled: widget.filled,
+          fillColor: widget.fillColor,
+          focusedBorder: widget.showFieldAsBox
+              ? outlineBorder(widget.focusedBorderColor)
+              : underlineInputBorder(widget.focusedBorderColor),
+          enabledBorder: widget.showFieldAsBox
+              ? outlineBorder(widget.enabledBorderColor)
+              : underlineInputBorder(widget.enabledBorderColor),
+          disabledBorder: widget.showFieldAsBox
+              ? outlineBorder(widget.disabledBorderColor)
+              : underlineInputBorder(widget.disabledBorderColor),
+          border: widget.showFieldAsBox
+              ? outlineBorder(widget.borderColor)
+              : underlineInputBorder(widget.borderColor),
+          contentPadding: widget.contentPadding,
+        ),
         obscureText: widget.obscureText,
         onChanged: (String value) {
-          //save entered value in a list
-          _verificationCode[index] = value;
-          onCodeChanged(verificationCode: value);
-          changeFocusToNextNodeWhenValueIsEntered(
-            value: value,
-            indexOfTextField: index,
-          );
-          changeFocusToPreviousNodeWhenValueIsRemoved(
-              value: value, indexOfTextField: index);
-          onSubmit(verificationCode: _verificationCode);
+          // This addition allows you to paste the otp if it is the correct length
+          if(value.length == widget.numberOfFields) {
+            for(int i = 0; i < value.length && i < widget.numberOfFields; i++) {
+              _textControllers[i]?.text = value[i];
+            }
+            _focusNodes[index]?.unfocus();
+          }
+          // If the value in the textfield is less than the numberOfFields, it takes the last character
+          else{
+            //save entered value in a list
+            _textControllers[index]?.text = value[value.length - 1];
+            _verificationCode[index] = value;
+            onCodeChanged(verificationCode: value);
+            changeFocusToNextNodeWhenValueIsEntered(
+              value: value,
+              indexOfTextField: index,
+            );
+            changeFocusToPreviousNodeWhenValueIsRemoved(
+                value: value, indexOfTextField: index);
+            onSubmit(verificationCode: _verificationCode);
+          }
         },
       ),
     );
@@ -285,7 +296,7 @@ class _OtpTextFieldState extends State<OtpTextField> {
     _backspaceHandled = true;
     Future.delayed(
       Duration(milliseconds: 100),
-      () {
+          () {
         _backspaceHandled = false;
       },
     );
@@ -306,7 +317,7 @@ class _OtpTextFieldState extends State<OtpTextField> {
     if (_backspaceHandled) return;
     try {
       final index =
-          _focusNodes.indexWhere((element) => element?.hasFocus ?? false);
+      _focusNodes.indexWhere((element) => element?.hasFocus ?? false);
       if (index > 0) {
         FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
       }
